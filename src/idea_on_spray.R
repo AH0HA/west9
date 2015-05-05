@@ -1,0 +1,7 @@
+sd1 = as.vector(as.character(as.Date(spray$Date) + 1))
+sd2 = as.vector(as.character(as.Date(spray$Date) + 2))
+sd3 = as.vector(as.character(as.Date(spray$Date) + 3))
+sd4 = as.vector(as.character(as.Date(spray$Date) + 4))
+sd5 = as.vector(as.character(as.Date(spray$Date) + 5))
+sd = c(as.vector(spray$Date), sd1, sd2, sd3, sd4, sd5)
+udate = intersect(as.vector(train$Date), sd)

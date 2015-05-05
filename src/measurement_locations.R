@@ -8,7 +8,7 @@ setwd("../working") # Not necessary for scripts running on Kaggle
 
 library(ggmap) # If you haven't yet, do this: install.packages("ggmap")  
 
-data_dir <- "../input"
+data_dir <- "C:\\Users\\c_kazum\\kaggle2\\chicago_mosq\\west_nile\\input"
 wnv <- read.csv(file.path(data_dir, "train.csv"))
 
 # Ggmap is used to download and plot map images. Scripts don't have access to the network, so 
