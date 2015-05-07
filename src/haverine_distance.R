@@ -23,3 +23,5 @@ distance <- function(longitude, latitude) {
   }
   return(2)
 }
+
+dflist$aug[1:10,]
