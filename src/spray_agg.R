@@ -8,7 +8,27 @@ ispray="spray.csv"
 
 
 
+
+
 tspray<- read.csv(file.path(data_dir, ispray))
+
+
+library(caret)
+set.seed(3456)
+trainIndex <- createDataPartition(dflist$aug$WnvPresent, p = .9,
+                                  list = FALSE,
+                                  times = 1)
+head(trainIndex)
+Resample1
+[1,]         1
+[2,]         2
+[3,]         4
+[4,]         5
+[5,]         6
+[6,]         8
+ssTrain <- dflist$aug[ trainIndex,]
+ssTest  <- dflist$aug[-trainIndex,]
+
 
 
 #grouped_data <- aggregate(data, by=list(data$column1, data$column2, data$column3), FUN=length);
@@ -32,17 +52,22 @@ which(is.na(tspray$Latitude)|is.na(tspray$Longitude))
 
 tspray$Date = as.Date(tspray$Date, format="%Y-%m-%d")
 
-total1 <- merge(dflist$aug,tspray,by="Date")
+total1 <- merge(x=dflist$aug,y=tspray,by="Date",all.x=TRUE)
 
-total1$spraydist<-distHaversine(as.matrix(total1[,c("Latitude.x","Longitude.x")]),as.matrix(total1[,c("Latitude.y","Longitude.y")]))
+total1spray<-total1[-which(is.na(total1$Latitude.y)),]
 
-summary(total1$spraydist)
+total1spray$spraydist<-distHaversine(as.matrix(total1spray[,c("Latitude.x","Longitude.x")]),as.matrix(total1spray[,c("Latitude.y","Longitude.y")]))
+
+summary(total1spray)
+
+total1spray[total1spray$Trap == 'T001',]
+
+studentdata[studentdata$Drink == 'water',]
+
+avg_spray<- aggregate(total1spray$spraydist, data = total1spray, by=list(total1spray$Trap),FUN=mean)
 
 
-avg_spray<- aggregate(total1$spraydist, data = total1, by=list(total1$Address),FUN=mean)
-
-
-names(avg_spray) <- c("Address","avg_spray_dist")
+names(avg_spray) <- c("Trap","avg_spray_dist")
 
 #Outer join: merge(x = df1, y = df2, by = "CustomerId", all = TRUE)
 
@@ -52,9 +77,40 @@ names(avg_spray) <- c("Address","avg_spray_dist")
 
 #Cross join: merge(x = df1, y = df2, by = NULL)
 
-xtrain<-merge(x=dflist$aug,y=avg_spray,by="Address",all.x=TRUE)
+xtrain<-merge(x=dflist$aug,y=avg_spray,by=c("Trap"),all.x=TRUE)
 
-length(which(is.na(xtrain$avg_spray)))
+xtrain[,c("Trap","Latitude","Longitude","avg_spray_dist")]
+
+#cleanAlgae <- centralImputation(algae)
+
+#xtrain.imp0[,c("Trap","avg_spray_dist")]
+
+xtrain.imp0<-centralImputation(xtrain[,c("Trap","Latitude","Longitude","avg_spray_dist")])
+
+
+xtrain.d<-subset(xtrain.imp0,!duplicated(xtrain.imp0$Trap))
+
+xtrain.c<-merge(x=xtrain.d[,c("Trap","avg_spray_dist")],y=dflist$aug,by=c("Trap"),all.y=TRUE)
+
+xtest.c<-merge(x=xtrain.d[,c("Trap","avg_spray_dist")],y=dflist$test,by=c("Trap"),all.y=TRUE)
+
+xtest.imp0<-centralImputation(xtest.c[,c("Trap","Latitude","Longitude","avg_spray_dist")])
+
+xtest.d<-subset(xtest.imp0,!duplicated(xtest.imp0$Trap))
+
+xtest.cc<-merge(x=xtest.d[,c("Trap","avg_spray_dist")],y=xtest.c,by=c("Trap"),all.y=TRUE)
+
+
+colnames(xtest.cc)[2] <- "avg_spray_dist"
+
+xtrain.s<-xtrain.c[,c(names(dflist$train),"avg_spray_dist")]
+
+xtrain.c[which(!is.na(xtrain.c$avg_spray_dist)),]
+
+
+library(DMwR)
+
+dim(xtrain[-which(is.na(xtrain$avg_spray)),])
 
 no_spray_dist=xtrain[which(is.na(xtrain$avg_spray)),]
 
@@ -87,13 +143,28 @@ library(lattice)
 library(ggplot2)
 
 
+fitm <- with(imp1, lm(y1 ~ y4 + x1))
+summary(fitm)
+
+
+names(dflist$train)
 xtrain.imp = data.frame(xtrain[,c("Latitude", "Longitude","avg_spray_dist")])
+
+xtrain_s = data.frame(xtrain[,c("WnvPresent" ,"dWeek"     , "Species2" ,  "Latitude" ,  "Longitude" ,"avg_spray_dist")])
+  
 #imp1 <- mice(xtrain.imp, m = 5)
-imp1 <- mice(xtrain.imp, m = 1)
+imp1 <- mice(xtrain_s, m = 5)
 
 imp1
 
 imp1$imp$avg_spray_dist
+
+
+require(gam)
+fitCv = with(imp1,gam(WnvPresent ~ s(dWeek) + Species2 + lo(Latitude, Longitude)+avg_spray_dist,
+             family="binomial"))
+
+xtest<-merge(x=dflist$test,y=avg_spray,by="Address",all.x=TRUE)
 
 
 imp_tot2 <- complete(imp1, "long", inc = TRUE)

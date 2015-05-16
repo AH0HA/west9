@@ -24,7 +24,7 @@ rf_model<-train(WnvPresent ~ .,data=my.x,method="rf",
 ## GAM modelling
 require(gam)
 fitCv = gam(WnvPresent ~ s(dWeek) + Species2 + lo(Latitude, Longitude),
-            data = x1, family="binomial")
+            data = x, family="binomial")
 p2<-predict(fitCv, newdata = x2, type = "response")
 p2<-predict(rf_model, newdata = x2, type = "response")
 ## check for a reasonable AUC of the model against unseen data (2011)
@@ -46,4 +46,4 @@ options("scipen"=100, "digits"=8)
 #format(Sys.time(), "%a_%B_%d_%X_%Y")
 exetime<-format(Sys.time(), "%Y-%m-%d_%H:%M:%S_%a")
 outfile=paste(outdir,"\\submitGAM",exetime,".txt",sep="")
-write.csv(submissionFile,"C:\\Users\\c_kazum\\kaggle2\\chicago_mosq\\west_nile\\output\\submitGAM.csv",row.names=FALSE,quote=FALSE)
+write.csv(submissionFile,"C:\\Users\\c_kazum\\kaggle2\\chicago_mosq\\west_nile\\output\\submitGAM2.csv",row.names=FALSE,quote=FALSE)
